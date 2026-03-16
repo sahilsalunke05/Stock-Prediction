@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Price Prediction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #f1f1f1;
+            padding-top: 70px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            max-width: 960px;
+        }
+        .form-section {
+            background-color: #1e1e1e;
+            color: #f1f1f1;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
+        }
+        .navbar-dark .navbar-nav .nav-link,
+        .navbar-dark .navbar-brand {
+            color: #f1f1f1;
+        }
+        .card {
+            background-color: #1e1e1e;
+            color: #f1f1f1;
+            border-color: #444;
+        }
+        .card-body {
+            background-color: #1e1e1e;
+        }
+        .table {
+            color: #f1f1f1;
+        }
+        .table th,
+        .table td {
+            background-color: #1e1e1e;
+            border-color: #444;
+            color: #f1f1f1;
+        }
+        .alert {
+            background-color: #333;
+            color: #f1f1f1;
+        }
+        textarea, input, select, .form-control {
+            background-color: #222;
+            color: #f1f1f1;
+            border: 1px solid #555;
+        }
+        textarea::placeholder,
+        input::placeholder {
+            color: #aaa;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-outline-info {
+            color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-outline-info:hover {
+            background-color: #17a2b8;
+            color: #fff;
+        }
+    </style>
+</head>
+<body id="top">
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="#">StockLens</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="window.scrollTo({ top: 0, behavior: 'smooth' }); return false;">Home</a>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="#contact">Contact Us</a></li>
+                <li class="nav-item"><a class="nav-link" href="#feedback">Feedback</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <h2 class="text-center mb-4">📈 Stock Price Prediction</h2>
+
+    <div class="form-section">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="stock" class="form-label">Enter Stock Ticker (e.g. INFY.NS, AAPL):</label>
+                <input type="text" class="form-control" id="stock" name="stock" placeholder="Enter stock ticker..." required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Get Prediction</button>
+        </form>
+        {% if error %}
+        <div class="alert alert-danger mt-3">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    {% if stock_name %}
+    <div class="form-section">
+        <h4>🏢 Company Info</h4>
+        <div class="card border-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ stock_name }}</h5>
+                <p><strong>Sector:</strong> {{ sector }}</p>
+                <p><strong>CEO:</strong> {{ ceo }}</p>
+                <p><strong>Country:</strong> {{ country }}</p>
+                <p><strong>Market Cap:</strong> ₹{{ '{:,.2f}'.format(market_cap|float) }}</p>
+                <p><strong>IPO Date:</strong> {{ ipo_date }}</p>
+                <p><strong>Website:</strong> <a href="{{ website }}" target="_blank">{{ website }}</a></p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if plot_path_ema_20_50 %}
+    <div class="form-section">
+        <h4 class="d-flex align-items-center">
+            📊 EMA 20 & 50 Chart
+            <button class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="collapse" data-bs-target="#info-ema-20-50">ℹ️</button>
+        </h4>
+        <div class="collapse" id="info-ema-20-50">
+            <div class="card card-body mb-3">
+                Uses past 2 years of price data to highlight short vs mid-term momentum.
+                EMA 20 crossing above EMA 50 is a bullish signal.
+            </div>
+        </div>
+        <img src="{{ plot_path_ema_20_50 }}" alt="EMA 20 & 50" class="img-fluid">
+
+        <h4 class="d-flex align-items-center">
+            📊 EMA 100 & 200 Chart
+            <button class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="collapse" data-bs-target="#info-ema-100-200">ℹ️</button>
+        </h4>
+        <div class="collapse" id="info-ema-100-200">
+            <div class="card card-body mb-3">
+                Shows long-term trend direction. Used by long-term investors to track crossovers.
+            </div>
+        </div>
+        <img src="{{ plot_path_ema_100_200 }}" alt="EMA 100 & 200" class="img-fluid">
+
+        <h4 class="d-flex align-items-center">
+            📉 Predicted vs Original
+            <button class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="collapse" data-bs-target="#info-predicted">ℹ️</button>
+        </h4>
+        <div class="collapse" id="info-predicted">
+            <div class="card card-body mb-3">
+                AI model prediction vs real price for recent months. Helps assess accuracy.
+            </div>
+        </div>
+        <img src="{{ plot_path_prediction }}" alt="Prediction" class="img-fluid">
+
+        <h4 class="d-flex align-items-center">
+            📦 Volume Traded
+            <button class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="collapse" data-bs-target="#info-volume">ℹ️</button>
+        </h4>
+        <div class="collapse" id="info-volume">
+            <div class="card card-body mb-3">
+                Visualizes daily traded volume to detect spikes that confirm moves.
+            </div>
+        </div>
+        <img src="{{ plot_path_volume }}" alt="Volume" class="img-fluid">
+
+        <h4 class="d-flex align-items-center">
+            📉 MACD Indicator
+            <button class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="collapse" data-bs-target="#info-macd">ℹ️</button>
+        </h4>
+        <div class="collapse" id="info-macd">
+            <div class="card card-body mb-3">
+                MACD crossover helps detect trend shifts or early reversals.
+            </div>
+        </div>
+        <img src="{{ plot_path_MACD }}" alt="MACD" class="img-fluid">
+
+        <h4 class="d-flex align-items-center">
+            📊 RSI Indicator
+            <button class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="collapse" data-bs-target="#info-rsi">ℹ️</button>
+        </h4>
+        <div class="collapse" id="info-rsi">
+            <div class="card card-body mb-3">
+                RSI shows if a stock is overbought (>70) or oversold (<30).
+            </div>
+        </div>
+        <img src="{{ plot_path_rsi }}" alt="RSI" class="img-fluid">
+
+        {% if candlestick_plot %}
+        <h4 class="d-flex align-items-center">
+            🕯️ Candlestick Chart (Interactive)
+            <button class="btn btn-sm btn-outline-info ms-2" data-bs-toggle="collapse" data-bs-target="#info-candlestick">ℹ️</button>
+        </h4>
+        <div class="collapse" id="info-candlestick">
+            <div class="card card-body mb-3">
+                Shows open, high, low, and close prices. Traders use it to identify patterns.
+            </div>
+        </div>
+        <div class="img-fluid">
+            {{ candlestick_plot | safe }}
+        </div>
+        {% endif %}
+
+        <h5>📑 Statistical Description</h5>
+        <div class="table-responsive">
+            {{ data_desc | safe }}
+        </div>
+
+        <div class="text-center mt-4">
+            <a class="btn btn-success" href="{{ dataset_link }}">📥 Download CSV</a>
+        </div>
+    </div>
+    {% endif %}
+
+    
+    <!-- Feedback Section -->
+    <div class="form-section" id="feedback">
+        <h4>💬 Feedback</h4>
+        <form method="POST" action="{{ url_for('feedback') }}">
+            <div class="mb-3">
+                <textarea name="feedback" class="form-control" rows="3" placeholder="Share your thoughts..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+        </form>
+        {% with messages = get_flashed_messages() %}
+        {% for msg in messages %}
+        <div class="alert alert-success mt-3">{{ msg }}</div>
+        {% endfor %}
+        {% endwith %}
+    </div>
+    
+    <!-- Contact Section -->
+    <div class="form-section" id="contact">
+        <h4>📬 Contact Us</h4>
+        <p>Have questions or feedback? Email us at <a href="mailto:stockprediction7@gmail.com">stockprediction7@gmail.com</a></p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+</body>
+</html>
